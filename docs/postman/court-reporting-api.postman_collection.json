@@ -1,0 +1,323 @@
+{
+  "info": {
+    "name": "Court Reporting Workflow API",
+    "description": "REST API for the Court Reporting Workflow Manager.\n\n**Base URL:** https://court-reporting-workflow-manager.onrender.com\n\n> The backend is hosted on Render's free tier and sleeps after 15 minutes of inactivity. The first request after a cold start may take 30–60 seconds. Call **Health → Healthcheck** first to wake it up.\n\n## Suggested run order\n\n1. **Health → Healthcheck**\n2. **Reporters → List reporters** (take note of an id)\n3. **Editors → List editors** (take note of an id)\n4. **Jobs → Create job** (gets id back)\n5. **Jobs → Assign reporter** (status → ASSIGNED)\n6. **Jobs → Advance status** with `TRANSCRIBED`\n7. **Jobs → Assign editor** (job must be TRANSCRIBED)\n8. **Jobs → Advance status** with `REVIEWED`\n9. **Jobs → Advance status** with `COMPLETED`\n10. **Jobs → Payment summary** to see totals",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://court-reporting-workflow-manager.onrender.com",
+      "type": "string"
+    },
+    {
+      "key": "jobId",
+      "value": "1",
+      "type": "string",
+      "description": "Replace with an actual job id from List jobs response"
+    },
+    {
+      "key": "reporterId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "editorId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Healthcheck",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Liveness check. Use this to wake up the Render backend before running other requests."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Jobs",
+      "item": [
+        {
+          "name": "List jobs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs"]
+            },
+            "description": "Returns all jobs with their assigned reporter and editor."
+          },
+          "response": []
+        },
+        {
+          "name": "Get job by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs", "{{jobId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create job",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"caseName\": \"Smith vs Jones Co.\",\n  \"durationMinutes\": 90,\n  \"locationType\": \"PHYSICAL\",\n  \"city\": \"Jakarta\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs"]
+            },
+            "description": "Required fields: `caseName`, `durationMinutes`, `locationType` (PHYSICAL or REMOTE).\n\n`city` is required when `locationType=PHYSICAL`."
+          },
+          "response": []
+        },
+        {
+          "name": "Suggest reporter",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}/suggest-reporter",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs", "{{jobId}}", "suggest-reporter"]
+            },
+            "description": "Recommends an available reporter for this job. Prefers same-city reporters for physical jobs."
+          },
+          "response": []
+        },
+        {
+          "name": "Assign reporter",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reporterId\": {{reporterId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}/assign-reporter",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs", "{{jobId}}", "assign-reporter"]
+            },
+            "description": "Job must be in `NEW` status. After assignment the job auto-transitions to `ASSIGNED`."
+          },
+          "response": []
+        },
+        {
+          "name": "Assign editor",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"editorId\": {{editorId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}/assign-editor",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs", "{{jobId}}", "assign-editor"]
+            },
+            "description": "Job must be in `TRANSCRIBED` status."
+          },
+          "response": []
+        },
+        {
+          "name": "Advance status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"TRANSCRIBED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs", "{{jobId}}", "status"]
+            },
+            "description": "Move job to the next status. Allowed flow:\n\n`NEW → ASSIGNED → TRANSCRIBED → REVIEWED → COMPLETED`\n\nRules:\n- Forward-only, one step at a time\n- Cannot reach TRANSCRIBED without an assigned reporter\n- Cannot reach REVIEWED without an assigned editor"
+          },
+          "response": []
+        },
+        {
+          "name": "Job payment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}/payment",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs", "{{jobId}}", "payment"]
+            },
+            "description": "Per-job payment breakdown. Reporter earns once assigned; editor earns only when status reaches REVIEWED."
+          },
+          "response": []
+        },
+        {
+          "name": "Payment summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/payments/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "jobs", "payments", "summary"]
+            },
+            "description": "Per-job earnings + grand totals across all jobs."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reporters",
+      "item": [
+        {
+          "name": "List reporters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reporters",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reporters"]
+            },
+            "description": "Returns all reporters with `activeJobCount` (number of non-COMPLETED jobs they're on)."
+          },
+          "response": []
+        },
+        {
+          "name": "Create reporter",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Doe\",\n  \"location\": \"Jakarta\",\n  \"ratePerMinute\": 2500,\n  \"available\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reporters",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reporters"]
+            },
+            "description": "Required: `name`, `location`. Optional: `ratePerMinute` (default 2000), `available` (default true)."
+          },
+          "response": []
+        },
+        {
+          "name": "Update reporter",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"available\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reporters/{{reporterId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reporters", "{{reporterId}}"]
+            },
+            "description": "Update any subset of fields: `name`, `location`, `ratePerMinute`, `available`. Use this to toggle a reporter on or off the roster."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Editors",
+      "item": [
+        {
+          "name": "List editors",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/editors",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "editors"]
+            },
+            "description": "Returns all editors with `activeJobCount`."
+          },
+          "response": []
+        },
+        {
+          "name": "Create editor",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Smith\",\n  \"flatFee\": 50000,\n  \"available\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/editors",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "editors"]
+            },
+            "description": "Required: `name`. Optional: `flatFee` (default 50000 IDR), `available` (default true)."
+          },
+          "response": []
+        },
+        {
+          "name": "Update editor",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"available\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/editors/{{editorId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "editors", "{{editorId}}"]
+            },
+            "description": "Update any subset of fields: `name`, `flatFee`, `available`."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
