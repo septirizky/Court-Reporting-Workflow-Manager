@@ -9,6 +9,7 @@ const {
   DB_USER = "postgres",
   DB_PASSWORD = "postgres",
   DB_NAME = "voicescript_db",
+  DB_SSL,
 } = process.env;
 
 export const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
@@ -16,4 +17,8 @@ export const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
   port: Number(DB_PORT),
   dialect: "postgres",
   logging: false,
+  dialectOptions:
+    DB_SSL === "true"
+      ? { ssl: { require: true, rejectUnauthorized: false } }
+      : undefined,
 });
