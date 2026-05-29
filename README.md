@@ -4,7 +4,23 @@ A workflow system for a court reporting agency to manage transcription jobs from
 
 ![Overview dashboard](docs/overview.png)
 
-## Quick Start
+## Live Demo
+
+| | URL |
+|---|---|
+| **Frontend** | https://court-reporting-workflow-manager.vercel.app |
+| **Backend API** | https://court-reporting-workflow-manager.onrender.com |
+| **Postman Collection** | [docs/postman/court-reporting-api.postman_collection.json](docs/postman/court-reporting-api.postman_collection.json) |
+
+> The backend is hosted on Render's free tier and sleeps after 15 minutes of inactivity. The first request after a cold start may take 30–60 seconds — subsequent requests are fast. If the dashboard looks empty on first load, wait a moment and refresh.
+
+### Testing the API with Postman
+
+1. Open Postman → **Import** → drop in [`docs/postman/court-reporting-api.postman_collection.json`](docs/postman/court-reporting-api.postman_collection.json)
+2. The collection points at the live backend by default. To test locally, change the `baseUrl` collection variable to `http://localhost:4000`
+3. Suggested run order: **Healthcheck** (wakes the backend) → **List reporters / editors** → **Create job** → **Assign reporter** → **Advance status** → **Assign editor** → **Advance status** → **Payment summary**
+
+## Quick Start (Local)
 
 **Prerequisites:** Node.js ≥ 20.9, PostgreSQL ≥ 13, npm.
 
@@ -104,6 +120,8 @@ A 1-minute walkthrough that touches every feature:
        browser                       services/ (pure logic)
                                      controllers/ (HTTP)
                                      routes/ (wiring)
+
+       Vercel                            Render                  Render Postgres
 ```
 
 Business rules live in `backend/src/services/` (pure functions: payment calculation, reporter suggestion). HTTP concerns stay in `controllers/`. This keeps the domain layer testable and portable — the same logic could power a CLI tool or a queue worker without changes.

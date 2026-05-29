@@ -4,6 +4,17 @@ REST API for the Court Reporting Workflow Manager. Handles jobs, reporter/editor
 
 Built with **Node.js**, **TypeScript**, **Express 5**, **Sequelize**, and **PostgreSQL**.
 
+**Live:** https://court-reporting-workflow-manager.onrender.com (Render free tier — may take 30–60 seconds to wake from idle)
+
+**Postman collection:** [../docs/postman/court-reporting-api.postman_collection.json](../docs/postman/court-reporting-api.postman_collection.json)
+
+Quick sanity check:
+
+```bash
+curl https://court-reporting-workflow-manager.onrender.com/health
+# {"ok":true}
+```
+
 ## Prerequisites
 
 - Node.js **>= 18**

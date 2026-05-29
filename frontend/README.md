@@ -4,6 +4,8 @@ Dashboard for managing transcription jobs, assigning court reporters and editors
 
 Built with **Next.js 16** (App Router), **React 19**, **TypeScript**, and **Tailwind CSS v4**.
 
+**Live:** https://court-reporting-workflow-manager.vercel.app
+
 ## Prerequisites
 
 - Node.js **>= 20.9.0** (Next.js 16 requirement)
